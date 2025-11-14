@@ -15,7 +15,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Bad Request: user_input is missing.' }, { status: 400 });
     }
 
-    const sessionId = Math.random().toString(36).substring(2);
+    const sessionId = new Date().getTime().toString();
 
     const n8nResponse = await fetch(n8nWebhookUrl, {
       method: 'POST',
