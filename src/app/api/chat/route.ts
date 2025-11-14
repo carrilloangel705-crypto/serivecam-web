@@ -15,12 +15,17 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Bad Request: user_input is missing.' }, { status: 400 });
     }
 
+    const sessionId = Math.random().toString(36).substring(2);
+
     const n8nResponse = await fetch(n8nWebhookUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ chatInput: user_input }),
+      body: JSON.stringify({ 
+        chatInput: user_input,
+        sessionId: sessionId
+      }),
     });
 
     if (!n8nResponse.ok) {
