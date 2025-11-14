@@ -1,0 +1,328 @@
+{
+  "name": "ServiceCam Customer Support Chatbot - FINAL (Adjuntos Condicionales)",
+  "nodes": [
+    {
+      "parameters": {
+        "public": true,
+        "initialMessages": "¡Hola! Soy el asistente virtual de ServiceCam. Puedo ayudarte con:\n\n• Información sobre horarios de atención\n• Cotizaciones de servicios\n• Agendar citas\n• Enviar información por email\n\n¿En qué puedo ayudarte hoy?",
+        "options": {
+          "loadPreviousSession": "memory",
+          "subtitle": "Soporte técnico y cotizaciones para ServiceCam"
+        }
+      },
+      "id": "a8e4da01-4a01-4aba-910c-7a91bf4f8a98",
+      "name": "Chat Trigger",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -96,
+        1056
+      ],
+      "webhookId": "8d1daab2-ef15-4d98-ab06-87adb2076633"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.chatInput }}",
+        "options": {
+          "systemMessage": "Eres un asistente virtual de soporte al cliente para ServiceCam, una empresa de servicios de cámaras de seguridad.\n\nTu rol es:\n- Proporcionar información sobre horarios de atención\n- Generar cotizaciones personalizadas basadas en las necesidades del cliente\n- Agendar citas en el calendario\n- Enviar emails con cotizaciones y confirmaciones (siempre usando un tono formal, sin errores).\n- Recopilar información de contacto de clientes potenciales\n\nHorarios de atención:\n- Lunes a Viernes: 9:00 AM - 6:00 PM\n- Sábados: 10:00 AM - 2:00 PM\n- Domingos: Cerrado\n\nServicios principales:\n1. Instalación de cámaras (desde $800 por cámara)\n2. Mantenimiento mensual ($500-$1000 según cantidad de cámaras)\n3. Monitoreo 24/7\n4. Consultoría de seguridad ($420 por visita)\n\nInstrucciones:\n1. Saluda cordialmente y pregunta cómo puedes ayudar\n2. Si el cliente pregunta por cotizaciones, usa el Quote Calculator Tool para calcular precios\n3. Si el cliente quiere agendar, usa el Google Calendar Tool\n4. Si el cliente proporciona email, usa el Gmail Tool para enviar información. La herramienta Gmail ya incluye la imagen adjunta. Al generar el 'email_body', **DEBES GENERAR SOLO EL CONTENIDO PRINCIPAL del mensaje en formato HTML limpio (usando etiquetas como &lt;p&gt;, &lt;h1&gt;, &lt;ul&gt;, &lt;li&gt;, etc.), sin incluir las etiquetas &lt;html&gt;, &lt;body&gt;, ni la firma. El diseño y la firma serán añadidos por el sistema automáticamente.**\n\n5. Mantén un tono profesional y amigable en español\n6. Recopila: nombre, email, teléfono, tipo de servicio requerido"
+        }
+      },
+      "id": "c7a0a176-b028-4a80-a9c6-3535d31fc278",
+      "name": "Support Agent (Prompt Modificado)",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        384,
+        1056
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "d2656bdb-0175-4731-905c-3fa4567ffee1",
+      "name": "Conversation Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        -32,
+        1280
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $fromAI('customer_email', 'Email del cliente', 'string') }}",
+        "subject": "={{ $fromAI('email_subject', 'Asunto del email', 'string', 'Información de ServiceCam') }}",
+        "message": "={{ '<html><head><style>body { font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0; } .container { width: 100%; max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 8px rgba(0,0,0,0.05); } .header { background-color: #0d47a1; color: #ffffff; padding: 20px; text-align: center; font-size: 20px; font-weight: bold; } .content { padding: 30px; line-height: 1.6; color: #333333; } .content p, .content ul, .content ol { margin-bottom: 20px; } .footer { padding: 20px; text-align: center; font-size: 12px; color: #777777; border-top: 1px solid #eeeeee; } .signature { margin-top: 30px; padding-top: 15px; border-top: 1px dashed #cccccc; font-size: 14px; } </style></head><body><div style=\"padding: 20px;\"><div class=\"container\"><div class=\"header\">ServiceCam - Soluciones de Seguridad</div><div class=\"content\"><p>Estimado/a cliente,</p><p>Agradecemos su interés en ServiceCam. Nos complace proporcionarle información detallada sobre los servicios de seguridad que ofrecemos para proteger lo que más le importa.</p>' + $fromAI('email_body', 'Contenido del cuerpo (solo HTML)') + '<div class=\"signature\"><p>Atentamente,</p><p>El equipo de ServiceCam</p><p>Contacto: servicecam.ca@gmail.com</p></div></div><div class=\"footer\">Este correo fue generado automáticamente. Por favor, no responda a este email.</div></div></div></body></html>' }}",
+        "options": {
+          "attachments": "=attachments"
+        }
+      },
+      "id": "eab7a3c3-4aa4-4ed2-b527-7460f03873c0",
+      "name": "Gmail Tool (Plantilla Incrustada)",
+      "type": "n8n-nodes-base.gmailTool",
+      "typeVersion": 2.1,
+      "position": [
+        768,
+        1056
+      ],
+      "webhookId": "1a0768ca-fdc2-4e27-b331-ca5d5b6bcb08",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "jlGgIYrgeo80foun",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "calendar": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Calendar', ``, 'string') }}"
+        },
+        "start": "={{ $fromAI('start_time', 'Fecha y hora de inicio (ISO format)', 'string') }}",
+        "end": "={{ $fromAI('end_time', 'Fecha y hora de fin (ISO format)', 'string') }}",
+        "additionalFields": {
+          "description": "={{ $fromAI('event_description', 'Descripción del evento', 'string') }}",
+          "summary": "={{ $fromAI('event_title', 'Título del evento', 'string', 'Cita ServiceCam') }}"
+        }
+      },
+      "id": "dfd78e70-d9f4-466e-9531-1aed2a2500b5",
+      "name": "Google Calendar Tool",
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        512,
+        1280
+      ],
+      "notesInFlow": false,
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "dtH5s6AOmhLsVVSh",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "description": "Calcula cotizaciones para servicios de ServiceCam. Parámetros: service_type (instalacion/mantenimiento/monitoreo/consultoria), quantity (número de cámaras o meses), additional_services (array de servicios adicionales)",
+        "jsCode": "// Herramienta para calcular cotizaciones de ServiceCam\nconst serviceType = $input.service_type || \"instalacion\";\nconst quantity = parseInt($input.quantity) || 1;\nconst additionalServices = $input.additional_services || [];\n\n// Precios base\nconst prices = {\n  instalacion: 150,\n  mantenimiento: 50,\n  monitoreo: 100,\n  consultoria: 200\n};\n\nlet basePrice = prices[serviceType] || 150;\nlet total = basePrice * quantity;\n\n// Descuentos por volumen\nif (quantity >= 10) {\n  total = total * 0.85; // 15% descuento\n} else if (quantity >= 5) {\n  total = total * 0.90; // 10% descuento\n}\n\n// Servicios adicionales\nlet additionalCost = 0;\nif (additionalServices.includes(\"urgente\")) {\n  additionalCost += 100;\n}\nif (additionalServices.includes(\"fin_de_semana\")) {\n  additionalCost += 150;\n}\n\ntotal += additionalCost;\n\nreturn {\n  service_type: serviceType,\n  quantity: quantity,\n  base_price: basePrice,\n  subtotal: basePrice * quantity,\n  discount: (basePrice * quantity - (total - additionalCost)).toFixed(2),\n  additional_services_cost: additionalCost.toFixed(2),\n  total: total.toFixed(2),\n  currency: \"USD\",\n  formatted_quote: `Cotización ServiceCam:\\n\\nServicio: ${serviceType}\\nCantidad: ${quantity}\\nPrecio base: $${basePrice} c/u\\nSubtotal: $${(basePrice * quantity).toFixed(2)}\\nDescuento: $${(basePrice * quantity - (total - additionalCost)).toFixed(2)}\\nServicios adicionales: $${additionalCost.toFixed(2)}\\n\\nTOTAL: $${total.toFixed(2)} USD`\n};",
+        "specifyInputSchema": true,
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"service_type\": {\n      \"type\": \"string\",\n      \"description\": \"Tipo de servicio: instalacion, mantenimiento, monitoreo, o consultoria\",\n      \"enum\": [\"instalacion\", \"mantenimiento\", \"monitoreo\", \"consultoria\"]\n    },\n    \"quantity\": {\n      \"type\": \"number\",\n      \"description\": \"Cantidad de cámaras o meses de servicio\"\n    },\n    \"additional_services\": {\n      \"type\": \"array\",\n      \"description\": \"Servicios adicionales solicitados\",\n      \"items\": {\n        \"type\": \"string\",\n        \"enum\": [\"urgente\", \"fin_de_semana\"]\n      }\n    }\n  },\n  \"required\": [\"service_type\", \"quantity\"]\n}"
+      },
+      "id": "b659a34e-77cf-4e57-932b-aaf2fd0e7f0e",
+      "name": "Quote Calculator Tool",
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1.3,
+      "position": [
+        768,
+        1280
+      ]
+    },
+    {
+      "parameters": {
+        "options": {
+          "maxOutputTokens": 2048
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        256,
+        1280
+      ],
+      "id": "50cba7ce-edf6-43e2-812a-2b624380df0c",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "prKZJRYt7BbD9j1q",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://placehold.co/100x100/222222/ffffff?text=ServiceCam",
+        "options": {
+          "responseFormat": "arraybuffer"
+        },
+        "optionsUi": {
+          "fullResponse": true
+        }
+      },
+      "id": "70d37e29-7928-4e78-9036-6101c51a9a8f",
+      "name": "HTTP Request: Get Image (Adjunto)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        180,
+        1472
+      ],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "options": {
+          "operation": "add"
+        },
+        "value": [
+          {
+            "name": "attachments",
+            "value": "=[\n  {\n    \"value\": $binary.data,\n    \"file_name\": \"ServiceCam_Adicional.png\"\n  }\n]"
+          }
+        ]
+      },
+      "id": "f1f9e2b1-5807-4e32-9c94-964268e0d5a4",
+      "name": "Set: Prepare Attachment",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        384,
+        1472
+      ]
+    },
+    {
+      "parameters": {
+        "options": {
+          "continueOnFail": true
+        }
+      },
+      "id": "5a420b9e-1c0b-419a-9e2d-48a04c10a12e",
+      "name": "Error Trigger: HTTP Fallback",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        180,
+        1672
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Chat Trigger": {
+      "main": [
+        [
+          {
+            "node": "Support Agent (Prompt Modificado)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Conversation Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "Support Agent (Prompt Modificado)",
+            "type": "ai_memory",
+            "index": 0
+          },
+          {
+            "node": "Chat Trigger",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail Tool (Plantilla Incrustada)": {
+      "ai_tool": [
+        [
+          {
+            "node": "Support Agent (Prompt Modificado)",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Calendar Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "Support Agent (Prompt Modificado)",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Quote Calculator Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "Support Agent (Prompt Modificado)",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Support Agent (Prompt Modificado)",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request: Get Image (Adjunto)": {
+      "main": [
+        [
+          {
+            "node": "Set: Prepare Attachment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ],
+      "error": [
+        [
+          {
+            "node": "Error Trigger: HTTP Fallback",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set: Prepare Attachment": {
+      "main": [
+        [
+          {
+            "node": "Gmail Tool (Plantilla Incrustada)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Error Trigger: HTTP Fallback": {
+      "main": [
+        [
+          {
+            "node": "Gmail Tool (Plantilla Incrustada)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "ecd5cca9-4133-4f6a-b3e8-40cb0cdaeff0",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "84c080bfa9401e9b06d1a73f45fcc745b7903d71a34663a8d8b30a10db5854f5"
+  },
+  "id": "rMwQcrMfNJrg6vKy",
+  "tags": []
+}
