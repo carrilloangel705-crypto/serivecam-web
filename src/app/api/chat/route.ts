@@ -1,14 +1,19 @@
 import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
+  const n8nWebhookUrl = process.env.N8N_WEBHOOK_URL;
+
+  if (!n8nWebhookUrl) {
+    console.error('N8N_WEBHOOK_URL environment variable is not set.');
+    return NextResponse.json({ error: 'Server configuration error: Webhook URL is not set.' }, { status: 500 });
+  }
+
   try {
     const { user_input } = await request.json();
 
     if (!user_input) {
       return NextResponse.json({ error: 'Bad Request: user_input is missing.' }, { status: 400 });
     }
-
-    const n8nWebhookUrl = 'https://carrisho300.app.n8n.cloud/webhook/8d1daab2-ef15-4d98-ab06-87adb2076633/chat';
 
     const n8nResponse = await fetch(n8nWebhookUrl, {
       method: 'POST',
